@@ -15,9 +15,9 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/asset"
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/audio"
@@ -40,12 +40,13 @@ func main() {
 				case lifecycle.CrossOff:
 					onStop()
 				}
-			case config.Event:
+			case size.Event:
 				globalCfg = e // dimension change. move to the center.
 				touchLoc = geom.Point{globalCfg.WidthPt / 2, globalCfg.HeightPt / 2}
 			case paint.Event:
 				onPaint(globalCfg)
-				a.EndPaint(e)
+				a.Publish()
+				a.Send(e)
 			case touch.Event:
 				onTouch(e)
 			}
@@ -69,7 +70,7 @@ var (
 	activate    = false
 	acceptTouch = false
 	touchLoc    geom.Point
-	globalCfg   config.Event
+	globalCfg   size.Event
 )
 
 func onTouch(t touch.Event) {
@@ -77,7 +78,7 @@ func onTouch(t touch.Event) {
 		return
 	}
 
-	touchLoc = t.Loc
+	touchLoc = geom.Point{X: geom.Pt(t.X), Y: geom.Pt(t.Y)}
 	acceptTouch = true
 	if !activate {
 		activate = true
@@ -102,7 +103,7 @@ func onStop() {
 	player.Close()
 }
 
-func onPaint(c config.Event) {
+func onPaint(c size.Event) {
 	if !started {
 		touchLoc = geom.Point{c.WidthPt / 2, c.HeightPt / 2}
 		started = true
